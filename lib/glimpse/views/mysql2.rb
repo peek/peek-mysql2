@@ -1,3 +1,5 @@
+require 'mysql2'
+
 # Instrument SQL time
 class Mysql2::Client
   class << self
