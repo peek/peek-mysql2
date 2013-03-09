@@ -1,6 +1,11 @@
 # Glimpse::Mysql2
 
-TODO: Write a gem description
+Provide a glimpse into the MySQL queries made during your application's requests.
+
+Things this glimpse view provides:
+
+- Total number of MySQL queries called during the request
+- The duration of the queries made during the request
 
 ## Installation
 
