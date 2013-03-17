@@ -1,19 +1,21 @@
 require 'mysql2'
+require 'atomic'
 
 # Instrument SQL time
 class Mysql2::Client
   class << self
     attr_accessor :query_time, :query_count
   end
-  self.query_count = 0
-  self.query_time = 0
+  self.query_count = Atomic.new(0)
+  self.query_time = Atomic.new(0)
 
   def query_with_timing(*args)
     start = Time.now
     query_without_timing(*args)
   ensure
-    Mysql2::Client.query_time += (Time.now - start)
-    Mysql2::Client.query_count += 1
+    duration = (Time.now - start)
+    Mysql2::Client.query_time.update { |value| value + duration }
+    Mysql2::Client.query_count.update { |value| value + 1 }
   end
   alias_method_chain :query, :timing
 end
@@ -22,7 +24,7 @@ module Glimpse
   module Views
     class Mysql2 < View
       def duration
-        ::Mysql2::Client.query_time
+        ::Mysql2::Client.query_time.value
       end
 
       def formatted_duration
@@ -35,7 +37,7 @@ module Glimpse
       end
 
       def calls
-        ::Mysql2::Client.query_count
+        ::Mysql2::Client.query_count.value
       end
 
       def results
@@ -47,8 +49,8 @@ module Glimpse
       def setup_subscribers
         # Reset each counter when a new request starts
         before_request do
-          ::Mysql2::Client.query_time = 0
-          ::Mysql2::Client.query_count = 0
+          ::Mysql2::Client.query_time.value = 0
+          ::Mysql2::Client.query_count.value = 0
         end
       end
     end
