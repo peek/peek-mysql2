@@ -20,7 +20,7 @@ class Mysql2::Client
   alias_method_chain :query, :timing
 end
 
-module Glimpse
+module Peek
   module Views
     class Mysql2 < View
       def duration

@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in glimpse-mysql2.gemspec
+# Specify your gem's dependencies in peek-mysql2.gemspec
 gemspec
