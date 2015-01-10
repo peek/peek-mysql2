@@ -4,10 +4,11 @@ require 'atomic'
 # Instrument SQL time
 class Mysql2::Client
   class << self
-    attr_accessor :query_time, :query_count
+    attr_accessor :query_time, :query_count, :query_list
   end
   self.query_count = Atomic.new(0)
   self.query_time = Atomic.new(0)
+	self.query_list = Atomic.new('')
 
   def query_with_timing(*args)
     start = Time.now
@@ -16,6 +17,10 @@ class Mysql2::Client
     duration = (Time.now - start)
     Mysql2::Client.query_time.update { |value| value + duration }
     Mysql2::Client.query_count.update { |value| value + 1 }
+		Mysql2::Client.query_list.update { |value|
+			ms = duration * 1000
+			value + args.first + '(' + ms.to_s + ' ms)<br>'
+		}
   end
   alias_method_chain :query, :timing
 end
@@ -40,8 +45,12 @@ module Peek
         ::Mysql2::Client.query_count.value
       end
 
+			def queries 
+				::Mysql2::Client.query_list.value
+			end
+
       def results
-        { :duration => formatted_duration, :calls => calls }
+        { :duration => formatted_duration, :calls => calls, :queries => queries }
       end
 
       private
@@ -51,6 +60,7 @@ module Peek
         before_request do
           ::Mysql2::Client.query_time.value = 0
           ::Mysql2::Client.query_count.value = 0
+					::Mysql2::Client.query_list.value = ''
         end
       end
     end
