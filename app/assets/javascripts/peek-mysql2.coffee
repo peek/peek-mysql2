@@ -1,5 +1,3 @@
-firstTime = true
-
 $(document).on "click", "#peek-mysql2-queries", (e) ->
 	e.preventDefault()
 	$this = $(this)
