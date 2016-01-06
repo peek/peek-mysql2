@@ -1,13 +1,13 @@
 require 'mysql2'
-require 'atomic'
+require 'concurrent/atomics'
 
 # Instrument SQL time
 class Mysql2::Client
   class << self
     attr_accessor :query_time, :query_count
   end
-  self.query_count = Atomic.new(0)
-  self.query_time = Atomic.new(0)
+  self.query_count = Concurrent::AtomicReference.new(0)
+  self.query_time = Concurrent::AtomicReference.new(0)
 
   def query_with_timing(*args)
     start = Time.now
