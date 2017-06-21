@@ -9,15 +9,20 @@ class Mysql2::Client
   self.query_count = Concurrent::AtomicReference.new(0)
   self.query_time = Concurrent::AtomicReference.new(0)
 
-  def query_with_timing(*args)
-    start = Time.now
-    query_without_timing(*args)
-  ensure
-    duration = (Time.now - start)
-    Mysql2::Client.query_time.update { |value| value + duration }
-    Mysql2::Client.query_count.update { |value| value + 1 }
+  if defined? Rails::VERSION::MAJOR && Rails::VERSION::MAJOR >= 5
+    require 'peek-mysql2/timing'
+    prepend ::Peek::Mysql2::Timing
+  else
+    def call_with_timing(*args, &block)
+      start = Time.now
+      call_without_timing(*args, &block)
+    ensure
+      duration = (Time.now - start)
+      Mysql2::Client.query_time.update { |value| value + duration }
+      Mysql2::Client.query_count.update { |value| value + 1 }
+    end
+    alias_method_chain :call, :timing
   end
-  alias_method_chain :query, :timing
 end
 
 module Peek
